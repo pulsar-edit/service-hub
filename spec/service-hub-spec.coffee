@@ -48,6 +48,36 @@ describe "ServiceHub", ->
       hub.provide "b", "1.0.0", z: 3
       expect(services).toEqual [{x: 1}, {y: 2}]
 
+    it "invokes the callback with the newest version of a service provided in a given batch when 'consume' is called with an object", ->
+      hub.provide "a",
+        "1.0.0": {w: 1}
+        "1.1.0": {x: 2}
+      hub.provide "a",
+        "1.2.0": {y: 3}
+      hub.provide "b",
+        "1.0.0": {z: 4}
+      hub.provide "a",
+        "1.1.0": { should_not_be_used: 999 },
+        "1.2.0": { v: 0 }
+      hub.provide "a",
+        "1.0.0": { w: -1 }
+
+      services100 = []
+      services110 = []
+      services120 = []
+
+      hub.consume "a", {
+        '1.0.0': (s) -> services100.push(s),
+        '1.1.0': (s) -> services110.push(s),
+        '1.2.0': (s) -> services120.push(s)
+      }
+
+      # The first and third `a` providers should fulfill with only the higher
+      # of the two services they expose.
+      expect(services100).toEqual([{ w: -1 }])
+      expect(services110).toEqual([{ x: 2 }])
+      expect(services120).toEqual([{ y: 3 }, { v: 0 }])
+
     it "can specify a key path that navigates into the contents of a service", ->
       hub.provide "a", "1.0.0", b: c: 1
       hub.provide "a", "1.0.0", d: e: 2
