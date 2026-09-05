@@ -68,7 +68,12 @@ class ServiceHub {
   //   where the keys are version ranges and the values are callback functions,
   //   in which case the third argument should be omitted.
   // * `callback` A {Function} to be called with current and future matching
-  //   service objects.
+  //   service objects. It receives two arguments: the service object, and a
+  //   {String} containing the version of the service that was matched.
+  //
+  // When a consumer declares several version ranges that overlap, the range
+  // with the highest lower bound wins; ranges with equal lower bounds are
+  // considered in the order they were declared.
   //
   // Returns a {Disposable} on which `.dispose()` can be called to remove the
   // consumer.
@@ -82,6 +87,7 @@ class ServiceHub {
     }
 
     return new Disposable(() => {
+      consumer.isDestroyed = true;
       const index = this.consumers.indexOf(consumer);
       if (index >= 0) { return this.consumers.splice(index, 1); }
     });
