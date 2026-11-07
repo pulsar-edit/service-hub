@@ -1,6 +1,5 @@
 spec
 script
-src
 *.coffee
 .npmignore
 .DS_Store
